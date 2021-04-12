@@ -1,5 +1,6 @@
 const controller = {}
 const Serie = require("../models/serie")
+const Platform = require("../models/platform")
 
 controller.saveSerie = async (req, res) => {
     let name = req.body.name
@@ -24,7 +25,18 @@ controller.saveSerie = async (req, res) => {
 controller.getSeries = async (req, res) => {
     const filter = req.query.filter
     try {
-        const series = await Serie.find({name: filter})
+        const query = {
+            $or: [
+                {
+                    name: new RegExp(filter, 'i')
+                },
+                {
+                    type: new RegExp(filter, 'i')
+                }
+            ]
+        }
+
+        const series = await Serie.find(query).populate("platform")
         res.json(series)
     } catch (err) {
         console.log(err)
@@ -35,7 +47,7 @@ controller.getSeries = async (req, res) => {
 controller.getSerie = async (req, res) => {
     const id = req.params.id
     try {
-        const serie = await Serie.findById(id)
+        const serie = await Serie.findById(id).populate("platform")
         res.json(serie)
     } catch (err) {
         console.log(err)
@@ -46,11 +58,18 @@ controller.getSerie = async (req, res) => {
 controller.updateSerie = async (req, res) => {
     const name = req.body.name
     const type = req.body.type
+    const platformId = req.body.platform
 
-    if (name && type) {
+    if (name && type && platformId) {
         try {
-            await Serie.findByIdAndUpdate(req.params.id, { name: name, type: type, updatedAt: Date.now() })
-            res.status(204).send()
+            const platform = await Platform.findById(platformId)
+            if (platform) {
+                await Serie.findByIdAndUpdate(req.params.id, { platform: platform, name: name, type: type, updatedAt: Date.now() })
+                res.status(204).send()
+            } else {
+                res.status(400).send("Error, no existe esa plataforma")
+            }
+
         } catch (err) {
             res.status(500).send(err)
         }

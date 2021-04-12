@@ -1,7 +1,7 @@
 const mongoose = require("mongoose")
 
-const user = "****"
-const password = "****"
+const user = "admin"
+const password = "admin123"
 
 const dbname = "multimedia"
 const host = "cluster0.onojt.mongodb.net"
